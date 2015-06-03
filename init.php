@@ -163,7 +163,7 @@ function prepare_items() {
   
    $data = $wpdb->get_results("
             SELECT file_added_by as owner , file_name as name , file_id as ID , display_name  , file_date as date_added FROM ".$prefix."wpfb_files fb 
-            INNER JOIN o4rz_users u
+            INNER JOIN ".$prefix."users u
             ON  fb.file_added_by=u.ID
            $do_search
           ");  
