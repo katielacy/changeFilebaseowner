@@ -6,7 +6,7 @@ Plugin Name: Ekouk Filebase owner switch
  * Author:       Katie Lacy
  * Author URI:   http://ekouk.com
  *
- * Version:      1.1
+ * Version:      1.2
 */
 
 if( ! class_exists( 'WP_List_Table' ) ) {
@@ -249,7 +249,15 @@ function my_render_list_page(){
 
   <form method="post">
     <input type="hidden" name="files" value="ttest_list_table">  
-    <?php wp_dropdown_users(array('name' => 'author')); ?>
+    <?php 
+    $blogusers = get_users( 'orderby=nicename&role=subscriber' );
+    $subcribers = array();
+    // Array of WP_User objects.
+    foreach ( $blogusers as $user ) {       
+        $subcribers[] = $user->ID;         
+    }
+    wp_dropdown_users(array('name' => 'author' , 'exclude' => $subcribers , 'show' => 'user_login' , 'orderby' => 'user_login'));
+    ?>
     <input name="update" type="submit" class="button button-primary button-large" id="editOwner" value="Update">
 
     <?php
