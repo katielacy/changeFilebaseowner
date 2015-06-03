@@ -6,7 +6,7 @@ Plugin Name: Ekouk Filebase owner switch
  * Author:       Katie Lacy
  * Author URI:   http://ekouk.com
  *
- * Version:      1.0
+ * Version:      1.1
 */
 
 if( ! class_exists( 'WP_List_Table' ) ) {
@@ -106,7 +106,9 @@ class Filebase_Owners_Table extends WP_List_Table {
     switch( $column_name ) { 
         case 'filetitle':
         case 'owner':  
-        case 'dateAdded':    
+        case 'dateAdded': 
+        case 'category':    
+
             return $item[ $column_name ];            
         default:
             return print_r( $item, true ) ; //Show the whole array for troubleshooting purposes
@@ -118,6 +120,8 @@ function get_columns(){
             'filetitle' => __( 'File Title', 'mylisttable' ),
             'owner'    => __( 'Owner', 'mylisttable' ),
             'dateAdded'      => __( 'Date Added', 'mylisttable' ),
+            'category'      => __( 'Category', 'mylisttable' ),
+
 
         );
          return $columns;
@@ -132,7 +136,9 @@ function get_sortable_columns() {
   $sortable_columns = array(
     'filetitle'  => array('filetitle',false),
     'owner' => array('owner',false),
-    'dateAdded'   => array('dateAdded',false)
+    'dateAdded'   => array('dateAdded',false),
+    'category'   => array('category',false)
+
 
   );
   return $sortable_columns;
@@ -162,18 +168,34 @@ function prepare_items() {
  
   
    $data = $wpdb->get_results("
-            SELECT file_added_by as owner , file_name as name , file_id as ID , display_name  , file_date as date_added FROM ".$prefix."wpfb_files fb 
+            SELECT file_added_by as owner , file_name as name , file_id as ID , display_name  , file_date as date_added , file_category_name as cat , file_category , cat_parent as parent FROM ".$prefix."wpfb_files fb 
             INNER JOIN ".$prefix."users u
             ON  fb.file_added_by=u.ID
+            INNER JOIN ".$prefix."wpfb_cats fbc
+            ON  fb.file_category=fbc.cat_id
            $do_search
           ");  
+   
+   $wpdbCats = array();
+    global $wpdb;              
   foreach ($data as $file => $fileItem) :
+      
+         $fbcats = $wpdb->get_results( "SELECT cat_id as ID, cat_name as name , cat_parent as parent FROM `".$prefix."wpfb_cats` fb WHERE fb.cat_id=".$fileItem->parent);  
+         $cats = array();
+         foreach ($fbcats as $cat) : 
+             $cats[] = $cat->name;
+         endforeach;
+         $parent = implode('' , $cats);
+         $parentCat = ($parent ? $parent.' > ' : '');      
+         
+         
       $fileItems[] =   
           array( 
             'ID' => $fileItem->ID,
             'filetitle' => $fileItem->name,
             'owner' => $fileItem->display_name, 
-            'dateAdded' =>  $fileItem->date_added
+            'dateAdded' =>  $fileItem->date_added,
+            'category' =>   $parentCat.$fileItem->cat
              );             
   endforeach;   
   $sortable = $this->get_sortable_columns();
